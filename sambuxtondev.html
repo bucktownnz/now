@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sam Buxton — Product Manager & Builder</title>
+  <meta name="description" content="Product Manager & Builder. Working on AI infrastructure for financial institutions. Building internet businesses on the side. From New Zealand, based in the UK.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,400;0,9..144,500;1,9..144,300&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg: #0E0F0D;
+      --bg-2: #161714;
+      --text: #E8E4DC;
+      --text-muted: #7A7870;
+      --accent: #C8A96E;
+      --accent-dim: #8A7249;
+      --border: #252620;
+      --green: #4A7C59;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Mono', monospace;
+      font-weight: 300;
+      line-height: 1.7;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout */
+    .container {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    /* Nav */
+    nav {
+      padding: 2.5rem 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+      animation-delay: 0.1s;
+    }
+
+    .nav-name {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--accent);
+      letter-spacing: 0.01em;
+      text-decoration: none;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+      list-style: none;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.75rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      transition: color 0.2s ease;
+    }
+
+    .nav-links a:hover { color: var(--text); }
+    .nav-links a.active { color: var(--accent); }
+
+    /* Hero */
+    .hero {
+      padding: 7rem 0 5rem;
+      opacity: 0;
+      animation: fadeUp 0.7s ease forwards;
+      animation-delay: 0.25s;
+    }
+
+    .hero-label {
+      font-size: 0.7rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .hero-label::before {
+      content: '';
+      display: inline-block;
+      width: 2rem;
+      height: 1px;
+      background: var(--accent-dim);
+    }
+
+    h1 {
+      font-family: 'Fraunces', serif;
+      font-size: clamp(2.8rem, 7vw, 4.2rem);
+      font-weight: 300;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      margin-bottom: 2rem;
+    }
+
+    h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-body {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      line-height: 1.85;
+    }
+
+    .hero-body p + p { margin-top: 1rem; }
+
+    .hero-body strong {
+      color: var(--text);
+      font-weight: 400;
+    }
+
+    /* Divider */
+    .divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 3.5rem 0;
+    }
+
+    /* Sections */
+    section {
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .section-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent);
+      font-weight: 400;
+    }
+
+    .section-line {
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* Now page */
+    .now-grid {
+      display: grid;
+      gap: 1.5rem;
+    }
+
+    .now-item {
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      padding: 1.5rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .now-item:hover { border-color: var(--accent-dim); }
+
+    .now-item-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-dim);
+      margin-bottom: 0.75rem;
+    }
+
+    .now-item-text {
+      font-size: 0.9rem;
+      color: var(--text);
+      line-height: 1.75;
+    }
+
+    .now-item-text p + p { margin-top: 0.5rem; }
+
+    /* Work */
+    .work-list {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .work-item {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: start;
+      gap: 1rem;
+      padding: 1.25rem 1.5rem;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      transition: border-color 0.2s ease;
+    }
+
+    .work-item:hover { border-color: var(--accent-dim); }
+
+    .work-title {
+      font-family: 'Fraunces', serif;
+      font-size: 1rem;
+      font-weight: 400;
+      color: var(--text);
+      margin-bottom: 0.35rem;
+    }
+
+    .work-desc {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      line-height: 1.65;
+    }
+
+    .work-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      padding: 0.25rem 0.5rem;
+      white-space: nowrap;
+    }
+
+    .work-tag.active {
+      color: var(--green);
+      border-color: var(--green);
+    }
+
+    .work-tag.stealth {
+      color: var(--accent-dim);
+      border-color: var(--accent-dim);
+    }
+
+    /* Writing */
+    .writing-note {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      font-style: italic;
+    }
+
+    /* Footer */
+    footer {
+      padding: 4rem 0 3rem;
+      opacity: 0;
+      animation: fadeUp 0.6s ease forwards;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-left {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-links a {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      letter-spacing: 0.05em;
+      transition: color 0.2s ease;
+    }
+
+    .footer-links a:hover { color: var(--accent); }
+
+    /* Animations */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    section:nth-of-type(1) { animation-delay: 0.4s; }
+    section:nth-of-type(2) { animation-delay: 0.55s; }
+    section:nth-of-type(3) { animation-delay: 0.7s; }
+    footer { animation-delay: 0.85s; }
+
+    /* Page sections visibility */
+    .page { display: none; }
+    .page.active { display: block; }
+    #home-page { display: block; }
+
+    /* Responsive */
+    @media (max-width: 600px) {
+      h1 { font-size: 2.4rem; }
+      .nav-links { gap: 1.25rem; }
+      .work-item { grid-template-columns: 1fr; }
+      .footer-inner { flex-direction: column; gap: 1rem; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <nav>
+    <a href="#" class="nav-name" onclick="showPage('home')">Sam Buxton</a>
+    <ul class="nav-links">
+      <li><a href="#" onclick="showPage('now')" id="nav-now">Now</a></li>
+      <li><a href="#" onclick="showPage('work')" id="nav-work">Work</a></li>
+      <li><a href="#" onclick="showPage('writing')" id="nav-writing">Writing</a></li>
+    </ul>
+  </nav>
+
+  <!-- HOME -->
+  <div id="home-page" class="page active">
+    <div class="hero">
+      <div class="hero-label">Product Manager & Builder</div>
+      <h1>Building things that <em>actually matter.</em></h1>
+      <div class="hero-body">
+        <p>
+          I'm Sam — a <strong>Product Manager and builder</strong> based in the UK, originally from New Zealand.
+          I care about platform thinking, technical excellence, and the kind of ambition that aims at Mars rather than the next feature.
+        </p>
+        <p>
+          By day I'm building AI infrastructure for a major UK financial institution — connecting architecture, creating knowledge layers, and making AI work inside some of the most regulated environments in the world.
+          On the side I'm building a portfolio of internet businesses.
+        </p>
+        <p>
+          I believe great products come from great teams. I care about culture, about building environments where people do the best work of their careers.
+        </p>
+      </div>
+    </div>
+
+    <hr class="divider">
+
+    <section>
+      <div class="section-header">
+        <span class="section-label">Right now</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="now-grid">
+        <div class="now-item">
+          <div class="now-item-label">Working on</div>
+          <div class="now-item-text">
+            <p>An AI-enhanced commercial lending solution at work. Building a unified data layer that turns a bank's architecture into an AI knowledge base.</p>
+            <p>Several internet business ideas in stealth. First launches coming soon.</p>
+          </div>
+        </div>
+        <div class="now-item">
+          <div class="now-item-label">Thinking about</div>
+          <div class="now-item-text">The gap between people who talk about building things and people who actually ship them. Closing that gap, personally.</div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- NOW PAGE -->
+  <div id="now-page" class="page">
+    <div class="hero">
+      <div class="hero-label">Last updated — April 2026</div>
+      <h1>What I'm doing <em>now.</em></h1>
+    </div>
+
+    <section style="animation-delay: 0.3s;">
+      <div class="section-header">
+        <span class="section-label">At work</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="now-grid">
+        <div class="now-item">
+          <div class="now-item-label">Day job</div>
+          <div class="now-item-text">
+            <p>Building AI solutions for a major UK financial institution. The current focus: connecting siloed architecture into a single source of truth — a knowledge layer that works for traditional use cases today and an AI knowledge base tomorrow.</p>
+            <p>Recently launched an async customer messaging capability. Now deep in a complex commercial lending lead processing solution with AI at its core.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section style="animation-delay: 0.45s;">
+      <div class="section-header">
+        <span class="section-label">Building</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="now-grid">
+        <div class="now-item">
+          <div class="now-item-label">Side projects</div>
+          <div class="now-item-text">
+            <p>Building a portfolio of niche internet businesses. First projects are in stealth — focused on lead generation directories in underserved UK markets.</p>
+            <p>The goal: ship something real, learn from it, repeat. Building the execution muscle.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section style="animation-delay: 0.6s;">
+      <div class="section-header">
+        <span class="section-label">Life</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="now-grid">
+        <div class="now-item">
+          <div class="now-item-label">Location</div>
+          <div class="now-item-text">Lincoln, UK. Spent 20+ years in New Zealand.</div>
+        </div>
+        <div class="now-item">
+          <div class="now-item-label">Thinking about</div>
+          <div class="now-item-text">The difference between planning and shipping. Massive ambition — the kind that sets a goal and doesn't shrink it when it gets hard. What it actually takes to build high-performing teams from scratch.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- WORK PAGE -->
+  <div id="work-page" class="page">
+    <div class="hero">
+      <div class="hero-label">Things I've built</div>
+      <h1>Work & <em>Projects.</em></h1>
+      <div class="hero-body">
+        <p>A mix of day job work and personal projects. This page grows as I ship things.</p>
+      </div>
+    </div>
+
+    <section style="animation-delay: 0.3s;">
+      <div class="section-header">
+        <span class="section-label">Professional</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="work-list">
+        <div class="work-item">
+          <div>
+            <div class="work-title">AI Knowledge Layer — Major UK Bank</div>
+            <div class="work-desc">Connecting siloed architecture into a unified data platform. Built for traditional use cases today, AI-native tomorrow.</div>
+          </div>
+          <span class="work-tag active">Active</span>
+        </div>
+        <div class="work-item">
+          <div>
+            <div class="work-title">Commercial Lending AI</div>
+            <div class="work-desc">AI-enhanced lead processing for complex commercial lending. Bringing intelligence into one of the most regulated pipelines in UK finance.</div>
+          </div>
+          <span class="work-tag active">Active</span>
+        </div>
+        <div class="work-item">
+          <div>
+            <div class="work-title">Async Customer Messaging</div>
+            <div class="work-desc">Launched an asynchronous messaging capability for customer service operations at a major UK financial institution.</div>
+          </div>
+          <span class="work-tag">Shipped</span>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <section style="animation-delay: 0.45s;">
+      <div class="section-header">
+        <span class="section-label">Side projects</span>
+        <div class="section-line"></div>
+      </div>
+      <div class="work-list">
+        <div class="work-item">
+          <div>
+            <div class="work-title">Niche internet businesses</div>
+            <div class="work-desc">Building a portfolio of lead generation directories targeting underserved UK markets. First launches coming in 2026.</div>
+          </div>
+          <span class="work-tag stealth">Stealth</span>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- WRITING PAGE -->
+  <div id="writing-page" class="page">
+    <div class="hero">
+      <div class="hero-label">Occasional writing</div>
+      <h1>Things I've <em>thought about.</em></h1>
+      <div class="hero-body">
+        <p>I write when I have something worth saying. No cadence, no newsletter, no content strategy. Just thinking out loud.</p>
+      </div>
+    </div>
+
+    <section style="animation-delay: 0.3s;">
+      <div class="section-header">
+        <span class="section-label">Posts</span>
+        <div class="section-line"></div>
+      </div>
+      <p class="writing-note">Nothing here yet. First post coming soon.</p>
+    </section>
+  </div>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">sambuxton.dev</div>
+      <div class="footer-links">
+        <a href="https://linkedin.com" target="_blank">LinkedIn</a>
+        <a href="https://twitter.com" target="_blank">Twitter / X</a>
+      </div>
+    </div>
+  </footer>
+
+</div>
+
+<script>
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-links a').forEach(a => a.classList.remove('active'));
+
+    const target = document.getElementById(page + '-page');
+    if (target) {
+      target.classList.add('active');
+      // re-trigger animations
+      target.querySelectorAll('section, .hero').forEach(el => {
+        el.style.animation = 'none';
+        el.offsetHeight;
+        el.style.animation = '';
+      });
+    }
+
+    const navEl = document.getElementById('nav-' + page);
+    if (navEl) navEl.classList.add('active');
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    return false;
+  }
+</script>
+
+</body>
+</html>
