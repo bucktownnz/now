@@ -11,7 +11,8 @@ export function formatNativePrice(n: number | null | undefined, currency: string
   return `${symbol}${n.toFixed(2)}`
 }
 
-
+/** Convert pence to formatted pounds string: 134000 → "£1,340.00" */
+export function penceToPounds(pence: number | null | undefined): string {
   if (pence == null) return '—'
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',
