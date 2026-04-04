@@ -48,7 +48,6 @@ export async function fetchQuotes(tickers: string[]): Promise<QuoteMap> {
 
   // Create instance per call — avoids module-level state issues in serverless
   const yf = new YahooFinance()
-  yf.suppressNotices(['yahooSurvey'])
 
   const result: QuoteMap = {}
 
