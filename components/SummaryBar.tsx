@@ -22,13 +22,21 @@ export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
 
   // Convert USD amount to GBP using live rate (fallback: ~1.27 if unavailable)
   const rate = gbpusdRate ?? 1.27
-  function toGBP(amount: number, currency: string | null): number {
+
+  // Derive currency from ticker when Yahoo data unavailable:
+  // Tickers ending in .L are LSE (GBP), otherwise assume USD
+  function tickerCurrency(ticker: string): string {
+    return ticker.endsWith('.L') ? 'GBP' : 'USD'
+  }
+
+  function toGBP(amount: number, currency: string): number {
     return currency === 'USD' ? amount / rate : amount
   }
 
   for (const h of holdings) {
     const q = quotes[h.ticker]
-    const currency = q?.currency ?? null
+    // Use Yahoo currency if available, else derive from ticker
+    const currency = q?.currency === 'GBp' ? 'GBP' : (q?.currency ?? tickerCurrency(h.ticker))
 
     totalCost += toGBP(h.avg_cost_pence * h.shares, currency)
 
@@ -41,7 +49,7 @@ export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
       const changeNative = currency === 'GBp'
         ? q.regularMarketChange / 100
         : q.regularMarketChange
-      totalDayChange += toGBP(changeNative * h.shares, currency === 'GBp' ? 'GBP' : currency)
+      totalDayChange += toGBP(changeNative * h.shares, currency)
     }
   }
 

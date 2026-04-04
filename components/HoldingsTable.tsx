@@ -47,8 +47,14 @@ function calcPnL(
   return { pounds, percent }
 }
 
-function formatCostWithCurrency(cost: number, currency: string | null): string {
-  const symbol = currency === 'USD' ? '$' : '£'
+// Derive currency from ticker when Yahoo data unavailable
+function tickerCurrency(ticker: string): string {
+  return ticker.endsWith('.L') ? 'GBP' : 'USD'
+}
+
+function formatCostWithCurrency(cost: number, currency: string | null, ticker: string): string {
+  const resolved = currency ?? tickerCurrency(ticker)
+  const symbol = resolved === 'USD' ? '$' : '£'
   return `${symbol}${cost.toFixed(2)}`
 }
 
@@ -92,7 +98,9 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
           <tbody>
             {holdings.map((h, i) => {
               const q = quotes[h.ticker]
-              const currency = q?.currency ?? null
+              // Normalise GBp → GBP; fall back to ticker-derived currency if Yahoo unavailable
+              const rawCurrency = q?.currency ?? null
+              const currency = rawCurrency === 'GBp' ? 'GBP' : (rawCurrency ?? tickerCurrency(h.ticker))
               const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
                 q?.nativePrice ?? null,
                 h.avg_cost_pence,
@@ -129,7 +137,7 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
                       </span>
                     </td>
                     <td className="py-3 pr-4 font-mono text-site-text">{h.shares}</td>
-                    <td className="py-3 pr-4 font-mono text-site-text">{formatCostWithCurrency(h.avg_cost_pence, currency)}</td>
+                    <td className="py-3 pr-4 font-mono text-site-text">{formatCostWithCurrency(h.avg_cost_pence, currency, h.ticker)}</td>
                     <td className="py-3 pr-4 font-mono text-site-text">
                       {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
                     </td>
@@ -193,7 +201,8 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
       <div className="sm:hidden flex flex-col gap-3">
         {holdings.map((h) => {
           const q = quotes[h.ticker]
-          const currency = q?.currency ?? null
+          const rawCurrency = q?.currency ?? null
+          const currency = rawCurrency === 'GBp' ? 'GBP' : (rawCurrency ?? tickerCurrency(h.ticker))
           const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
             q?.nativePrice ?? null,
             h.avg_cost_pence,
@@ -234,7 +243,7 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Avg Cost</span>
-                    <span className="font-mono text-site-text text-xs">{formatCostWithCurrency(h.avg_cost_pence, currency)}</span>
+                    <span className="font-mono text-site-text text-xs">{formatCostWithCurrency(h.avg_cost_pence, currency, h.ticker)}</span>
                   </div>
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>P&L</span>
