@@ -11,29 +11,37 @@ interface Holding {
 interface Props {
   holdings: Holding[]
   quotes: QuoteMap
+  gbpusdRate: number | null
 }
 
-export default function SummaryBar({ holdings, quotes }: Props) {
+export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
   let totalValue = 0
   let totalCost = 0
   let totalDayChange = 0
   let hasPrices = false
 
+  // Convert USD amount to GBP using live rate (fallback: ~1.27 if unavailable)
+  const rate = gbpusdRate ?? 1.27
+  function toGBP(amount: number, currency: string | null): number {
+    return currency === 'USD' ? amount / rate : amount
+  }
+
   for (const h of holdings) {
     const q = quotes[h.ticker]
-    // avg_cost_pence is stored as £/$ per share — multiply by shares directly
-    totalCost += h.avg_cost_pence * h.shares
+    const currency = q?.currency ?? null
+
+    totalCost += toGBP(h.avg_cost_pence * h.shares, currency)
 
     if (q?.nativePrice != null) {
       hasPrices = true
-      totalValue += q.nativePrice * h.shares
+      totalValue += toGBP(q.nativePrice * h.shares, currency)
     }
     if (q?.regularMarketChange != null) {
-      // regularMarketChange is in the raw currency — convert GBp to GBP
-      const changeNative = q.currency === 'GBp'
+      // regularMarketChange is in the raw currency — convert GBp to GBP first
+      const changeNative = currency === 'GBp'
         ? q.regularMarketChange / 100
         : q.regularMarketChange
-      totalDayChange += changeNative * h.shares
+      totalDayChange += toGBP(changeNative * h.shares, currency === 'GBp' ? 'GBP' : currency)
     }
   }
 

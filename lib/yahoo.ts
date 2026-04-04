@@ -37,6 +37,17 @@ function toNativePrice(price: number | null | undefined, currency: string | null
   return price
 }
 
+/** Fetch a live FX rate, e.g. 'GBPUSD=X' → 1.28. Returns null on failure. */
+export async function fetchFxRate(pair: string): Promise<number | null> {
+  try {
+    const yf = new YahooFinance()
+    const q = await yf.quote(pair)
+    return q.regularMarketPrice ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function fetchQuotes(tickers: string[]): Promise<QuoteMap> {
   if (tickers.length === 0) return {}
 

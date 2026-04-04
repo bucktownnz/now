@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { fetchQuotes } from '@/lib/yahoo'
+import { fetchQuotes, fetchFxRate } from '@/lib/yahoo'
 import SummaryBar from '@/components/SummaryBar'
 import HoldingsTable from '@/components/HoldingsTable'
 import WatchlistTable from '@/components/WatchlistTable'
@@ -36,7 +36,10 @@ export default async function DashboardPage() {
     ...watchlistItems.map((w) => w.ticker),
   ]
 
-  const quotes = allTickers.length > 0 ? await fetchQuotes(allTickers) : {}
+  const [quotes, gbpusdRate] = await Promise.all([
+    allTickers.length > 0 ? fetchQuotes(allTickers) : Promise.resolve({}),
+    fetchFxRate('GBPUSD=X'),
+  ])
   const fetchTime = new Date()
 
   async function handleSignOut() {
@@ -132,7 +135,7 @@ export default async function DashboardPage() {
 
         {/* Summary bar */}
         <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <SummaryBar holdings={holdings} quotes={quotes} />
+          <SummaryBar holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
         </div>
 
         {/* Holdings section */}
@@ -149,7 +152,7 @@ export default async function DashboardPage() {
               {holdings.length} {holdings.length === 1 ? 'position' : 'positions'}
             </span>
           </div>
-          <HoldingsTable holdings={holdings} quotes={quotes} />
+          <HoldingsTable holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
         </section>
 
         {/* Watchlist section */}

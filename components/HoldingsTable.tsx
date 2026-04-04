@@ -5,7 +5,6 @@ import Link from 'next/link'
 import ThesisPanel from './ThesisPanel'
 import FiftyTwoWeekBar from './FiftyTwoWeekBar'
 import {
-  formatAvgCost,
   formatNativePrice,
   formatPercent,
   formatPercentRaw,
@@ -29,16 +28,31 @@ interface Holding {
 interface Props {
   holdings: Holding[]
   quotes: QuoteMap
+  gbpusdRate: number | null
 }
 
-function calcPnL(nativePrice: number | null, avgCost: number, shares: number) {
+function calcPnL(
+  nativePrice: number | null,
+  avgCost: number,
+  shares: number,
+  currency: string | null,
+  gbpusdRate: number | null
+) {
   if (nativePrice == null) return { pounds: null, percent: null }
-  const pounds = (nativePrice - avgCost) * shares
+  const rate = gbpusdRate ?? 1.27
+  const nativePnL = (nativePrice - avgCost) * shares
+  // Convert USD P&L to GBP for consistent display
+  const pounds = currency === 'USD' ? nativePnL / rate : nativePnL
   const percent = avgCost > 0 ? ((nativePrice - avgCost) / avgCost) * 100 : null
   return { pounds, percent }
 }
 
-export default function HoldingsTable({ holdings, quotes }: Props) {
+function formatCostWithCurrency(cost: number, currency: string | null): string {
+  const symbol = currency === 'USD' ? '$' : '£'
+  return `${symbol}${cost.toFixed(2)}`
+}
+
+export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function toggle(id: string) {
@@ -78,10 +92,13 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
           <tbody>
             {holdings.map((h, i) => {
               const q = quotes[h.ticker]
+              const currency = q?.currency ?? null
               const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
                 q?.nativePrice ?? null,
                 h.avg_cost_pence,
-                h.shares
+                h.shares,
+                currency,
+                gbpusdRate
               )
               const isExpanded = expandedId === h.id
 
@@ -112,7 +129,7 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                       </span>
                     </td>
                     <td className="py-3 pr-4 font-mono text-site-text">{h.shares}</td>
-                    <td className="py-3 pr-4 font-mono text-site-text">{formatAvgCost(h.avg_cost_pence)}</td>
+                    <td className="py-3 pr-4 font-mono text-site-text">{formatCostWithCurrency(h.avg_cost_pence, currency)}</td>
                     <td className="py-3 pr-4 font-mono text-site-text">
                       {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
                     </td>
@@ -176,10 +193,13 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
       <div className="sm:hidden flex flex-col gap-3">
         {holdings.map((h) => {
           const q = quotes[h.ticker]
+          const currency = q?.currency ?? null
           const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
             q?.nativePrice ?? null,
             h.avg_cost_pence,
-            h.shares
+            h.shares,
+            currency,
+            gbpusdRate
           )
           const isExpanded = expandedId === h.id
 
@@ -214,7 +234,7 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Avg Cost</span>
-                    <span className="font-mono text-site-text text-xs">{formatAvgCost(h.avg_cost_pence)}</span>
+                    <span className="font-mono text-site-text text-xs">{formatCostWithCurrency(h.avg_cost_pence, currency)}</span>
                   </div>
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>P&L</span>
