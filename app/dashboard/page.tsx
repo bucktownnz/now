@@ -1,11 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { fetchQuotes, fetchFxRate } from '@/lib/yahoo'
-import SummaryBar from '@/components/SummaryBar'
-import HoldingsTable from '@/components/HoldingsTable'
-import WatchlistTable from '@/components/WatchlistTable'
-import RefreshButton from '@/components/RefreshButton'
+import DashboardShell from '@/components/DashboardShell'
 
 export const dynamic = 'force-dynamic'
 
@@ -30,17 +26,6 @@ export default async function DashboardPage() {
 
   const holdings = holdingsResult.data ?? []
   const watchlistItems = watchlistResult.data ?? []
-
-  const allTickers = [
-    ...holdings.map((h) => h.ticker),
-    ...watchlistItems.map((w) => w.ticker),
-  ]
-
-  const [quotes, gbpusdRate] = await Promise.all([
-    allTickers.length > 0 ? fetchQuotes(allTickers) : Promise.resolve({}),
-    fetchFxRate('GBPUSD=X'),
-  ])
-  const fetchTime = new Date()
 
   async function handleSignOut() {
     'use server'
@@ -110,67 +95,27 @@ export default async function DashboardPage() {
             className="text-text-muted mb-4 flex items-center gap-3"
             style={{ fontSize: '0.7rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
           >
-            <span
-              className="inline-block w-8 h-px"
-              style={{ background: '#8A7249' }}
-            />
+            <span className="inline-block w-8 h-px" style={{ background: '#8A7249' }} />
             Portfolio
           </div>
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <h1
-              style={{
-                fontFamily: 'Fraunces, serif',
-                fontSize: 'clamp(2rem, 5vw, 3rem)',
-                fontWeight: 300,
-                lineHeight: 1.1,
-                letterSpacing: '-0.02em',
-                color: '#E8E4DC',
-              }}
-            >
-              UK <em style={{ fontStyle: 'italic', color: '#C8A96E' }}>Holdings.</em>
-            </h1>
-            <RefreshButton initialFetchTime={fetchTime} />
-          </div>
+          <h1
+            style={{
+              fontFamily: 'Fraunces, serif',
+              fontSize: 'clamp(2rem, 5vw, 3rem)',
+              fontWeight: 300,
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              color: '#E8E4DC',
+            }}
+          >
+            UK <em style={{ fontStyle: 'italic', color: '#C8A96E' }}>Holdings.</em>
+          </h1>
         </div>
 
-        {/* Summary bar */}
+        {/* Data sections — fetched client-side via edge API */}
         <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <SummaryBar holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
+          <DashboardShell holdings={holdings} watchlistItems={watchlistItems} />
         </div>
-
-        {/* Holdings section */}
-        <section className="mb-12 animate-fade-up" style={{ animationDelay: '0.5s' }}>
-          <div className="flex items-baseline gap-3 mb-6">
-            <span
-              className="text-accent shrink-0"
-              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            >
-              Holdings
-            </span>
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-text-muted shrink-0" style={{ fontSize: '0.65rem' }}>
-              {holdings.length} {holdings.length === 1 ? 'position' : 'positions'}
-            </span>
-          </div>
-          <HoldingsTable holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
-        </section>
-
-        {/* Watchlist section */}
-        <section className="mb-16 animate-fade-up" style={{ animationDelay: '0.65s' }}>
-          <div className="flex items-baseline gap-3 mb-6">
-            <span
-              className="text-accent shrink-0"
-              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
-            >
-              Watchlist
-            </span>
-            <div className="flex-1 h-px bg-border" />
-            <span className="text-text-muted shrink-0" style={{ fontSize: '0.65rem' }}>
-              {watchlistItems.length} {watchlistItems.length === 1 ? 'ticker' : 'tickers'}
-            </span>
-          </div>
-          <WatchlistTable watchlist={watchlistItems} quotes={quotes} />
-        </section>
 
         {/* Footer */}
         <footer className="border-t border-border pt-6 pb-10 flex items-center justify-between animate-fade-up" style={{ animationDelay: '0.8s' }}>
