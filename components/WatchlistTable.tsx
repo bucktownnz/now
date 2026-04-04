@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import FiftyTwoWeekBar from './FiftyTwoWeekBar'
-import { formatPence, formatPercentRaw, formatPE, gainColour } from '@/lib/utils'
+import { formatNativePrice, formatPercentRaw, formatPE, gainColour } from '@/lib/utils'
 import type { QuoteMap } from '@/lib/yahoo'
 
 interface WatchlistItem {
@@ -71,16 +71,16 @@ export default function WatchlistTable({ watchlist, quotes }: Props) {
                     </span>
                   </td>
                   <td className="py-3 pr-4 font-mono text-site-text">
-                    {formatPence(q?.regularMarketPrice ?? null)}
+                    {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
                   </td>
                   <td className={`py-3 pr-4 font-mono ${gainColour(q?.regularMarketChangePercent ?? null)}`}>
                     {formatPercentRaw(q?.regularMarketChangePercent ?? null)}
                   </td>
                   <td className="py-3 pr-4">
                     <FiftyTwoWeekBar
-                      low={q?.fiftyTwoWeekLow ?? null}
-                      high={q?.fiftyTwoWeekHigh ?? null}
-                      current={q?.regularMarketPrice ?? null}
+                      low={q?.currency === 'GBp' ? (q.fiftyTwoWeekLow ?? null) && (q.fiftyTwoWeekLow! / 100) : (q?.fiftyTwoWeekLow ?? null)}
+                      high={q?.currency === 'GBp' ? (q.fiftyTwoWeekHigh ?? null) && (q.fiftyTwoWeekHigh! / 100) : (q?.fiftyTwoWeekHigh ?? null)}
+                      current={q?.nativePrice ?? null}
                     />
                   </td>
                   <td className="py-3 pr-4 font-mono text-site-text">
@@ -125,7 +125,7 @@ export default function WatchlistTable({ watchlist, quotes }: Props) {
                 </div>
                 <div className="text-right">
                   <span className="text-site-text font-mono text-sm block">
-                    {formatPence(q?.regularMarketPrice ?? null)}
+                    {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
                   </span>
                   <span className={`font-mono ${gainColour(q?.regularMarketChangePercent ?? null)}`} style={{ fontSize: '0.8rem' }}>
                     {formatPercentRaw(q?.regularMarketChangePercent ?? null)}

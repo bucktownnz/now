@@ -5,7 +5,7 @@ interface Holding {
   id: string
   ticker: string
   shares: number
-  avg_cost_pence: number
+  avg_cost_pence: number  // stored as £/$ per share (not actual pence)
 }
 
 interface Props {
@@ -21,13 +21,19 @@ export default function SummaryBar({ holdings, quotes }: Props) {
 
   for (const h of holdings) {
     const q = quotes[h.ticker]
-    totalCost += (h.avg_cost_pence * h.shares) / 100
-    if (q?.regularMarketPrice != null) {
+    // avg_cost_pence is stored as £/$ per share — multiply by shares directly
+    totalCost += h.avg_cost_pence * h.shares
+
+    if (q?.nativePrice != null) {
       hasPrices = true
-      totalValue += (q.regularMarketPrice * h.shares) / 100
+      totalValue += q.nativePrice * h.shares
     }
     if (q?.regularMarketChange != null) {
-      totalDayChange += (q.regularMarketChange * h.shares) / 100
+      // regularMarketChange is in the raw currency — convert GBp to GBP
+      const changeNative = q.currency === 'GBp'
+        ? q.regularMarketChange / 100
+        : q.regularMarketChange
+      totalDayChange += changeNative * h.shares
     }
   }
 
@@ -35,7 +41,7 @@ export default function SummaryBar({ holdings, quotes }: Props) {
   const totalPnLPercent = hasPrices && totalCost > 0
     ? ((totalValue - totalCost) / totalCost) * 100
     : null
-  const dayChangePercent = hasPrices && totalValue > 0
+  const dayChangePercent = hasPrices && (totalValue - totalDayChange) > 0
     ? (totalDayChange / (totalValue - totalDayChange)) * 100
     : null
 

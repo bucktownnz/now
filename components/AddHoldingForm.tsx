@@ -90,14 +90,14 @@ export default function AddHoldingForm({ initial, onDone }: Props) {
           />
         </div>
         <div>
-          <label className={labelClass} style={labelStyle}>Avg Cost (pence)</label>
+          <label className={labelClass} style={labelStyle}>Avg Cost per share (£ or $)</label>
           <input
             name="avg_cost_pence"
             type="number"
             step="any"
             required
             defaultValue={initial?.avg_cost_pence}
-            placeholder="1100"
+            placeholder="89.82"
             className={inputClass}
           />
         </div>

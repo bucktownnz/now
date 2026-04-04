@@ -1,5 +1,17 @@
-/** Convert pence to formatted pounds string: 134000 → "£1,340.00" */
-export function penceToPounds(pence: number | null | undefined): string {
+/** Format avg cost as £ — stored value is already in £/$ (NOT pence): 89.82 → "£89.82" */
+export function formatAvgCost(n: number | null | undefined): string {
+  if (n == null) return '—'
+  return `£${n.toFixed(2)}`
+}
+
+/** Format a native market price (GBp already converted to GBP, or USD as-is) */
+export function formatNativePrice(n: number | null | undefined, currency: string | null | undefined): string {
+  if (n == null) return '—'
+  const symbol = currency === 'USD' ? '$' : '£'
+  return `${symbol}${n.toFixed(2)}`
+}
+
+
   if (pence == null) return '—'
   return new Intl.NumberFormat('en-GB', {
     style: 'currency',

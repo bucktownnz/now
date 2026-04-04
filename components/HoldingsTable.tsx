@@ -5,14 +5,13 @@ import Link from 'next/link'
 import ThesisPanel from './ThesisPanel'
 import FiftyTwoWeekBar from './FiftyTwoWeekBar'
 import {
-  formatPence,
+  formatAvgCost,
+  formatNativePrice,
   formatPercent,
   formatPercentRaw,
   formatPounds,
   formatPE,
   gainColour,
-  calcPnLPounds,
-  calcPnLPercent,
 } from '@/lib/utils'
 import type { QuoteMap } from '@/lib/yahoo'
 
@@ -21,7 +20,7 @@ interface Holding {
   ticker: string
   name: string
   shares: number
-  avg_cost_pence: number
+  avg_cost_pence: number  // stored as £/$ per share
   thesis: string
   sector: string
   added_at: string
@@ -30,6 +29,13 @@ interface Holding {
 interface Props {
   holdings: Holding[]
   quotes: QuoteMap
+}
+
+function calcPnL(nativePrice: number | null, avgCost: number, shares: number) {
+  if (nativePrice == null) return { pounds: null, percent: null }
+  const pounds = (nativePrice - avgCost) * shares
+  const percent = avgCost > 0 ? ((nativePrice - avgCost) / avgCost) * 100 : null
+  return { pounds, percent }
 }
 
 export default function HoldingsTable({ holdings, quotes }: Props) {
@@ -72,9 +78,18 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
           <tbody>
             {holdings.map((h, i) => {
               const q = quotes[h.ticker]
-              const pnlPounds = calcPnLPounds(q?.regularMarketPrice ?? null, h.avg_cost_pence, h.shares)
-              const pnlPercent = calcPnLPercent(q?.regularMarketPrice ?? null, h.avg_cost_pence)
+              const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
+                q?.nativePrice ?? null,
+                h.avg_cost_pence,
+                h.shares
+              )
               const isExpanded = expandedId === h.id
+
+              // 52wk range: convert GBp to GBP if needed
+              const toNative = (v: number | null | undefined) => {
+                if (v == null) return null
+                return q?.currency === 'GBp' ? v / 100 : v
+              }
 
               return (
                 <>
@@ -97,8 +112,10 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                       </span>
                     </td>
                     <td className="py-3 pr-4 font-mono text-site-text">{h.shares}</td>
-                    <td className="py-3 pr-4 font-mono text-site-text">{formatPence(h.avg_cost_pence)}</td>
-                    <td className="py-3 pr-4 font-mono text-site-text">{formatPence(q?.regularMarketPrice ?? null)}</td>
+                    <td className="py-3 pr-4 font-mono text-site-text">{formatAvgCost(h.avg_cost_pence)}</td>
+                    <td className="py-3 pr-4 font-mono text-site-text">
+                      {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
+                    </td>
                     <td className={`py-3 pr-4 font-mono ${gainColour(q?.regularMarketChangePercent ?? null)}`}>
                       {formatPercentRaw(q?.regularMarketChangePercent ?? null)}
                     </td>
@@ -111,9 +128,9 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                     <td className="py-3 pr-4 font-mono text-site-text">{formatPE(q?.trailingPE ?? null)}</td>
                     <td className="py-3 pr-4">
                       <FiftyTwoWeekBar
-                        low={q?.fiftyTwoWeekLow ?? null}
-                        high={q?.fiftyTwoWeekHigh ?? null}
-                        current={q?.regularMarketPrice ?? null}
+                        low={toNative(q?.fiftyTwoWeekLow)}
+                        high={toNative(q?.fiftyTwoWeekHigh)}
+                        current={q?.nativePrice ?? null}
                       />
                     </td>
                     <td className="py-3">
@@ -159,8 +176,11 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
       <div className="sm:hidden flex flex-col gap-3">
         {holdings.map((h) => {
           const q = quotes[h.ticker]
-          const pnlPounds = calcPnLPounds(q?.regularMarketPrice ?? null, h.avg_cost_pence, h.shares)
-          const pnlPercent = calcPnLPercent(q?.regularMarketPrice ?? null, h.avg_cost_pence)
+          const { pounds: pnlPounds, percent: pnlPercent } = calcPnL(
+            q?.nativePrice ?? null,
+            h.avg_cost_pence,
+            h.shares
+          )
           const isExpanded = expandedId === h.id
 
           return (
@@ -183,7 +203,7 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                   </div>
                   <div className="text-right">
                     <span className="text-site-text font-mono text-sm block">
-                      {formatPence(q?.regularMarketPrice ?? null)}
+                      {formatNativePrice(q?.nativePrice ?? null, q?.currency ?? null)}
                     </span>
                     <span className={`font-mono ${gainColour(q?.regularMarketChangePercent ?? null)}`} style={{ fontSize: '0.8rem' }}>
                       {formatPercentRaw(q?.regularMarketChangePercent ?? null)}
@@ -194,7 +214,7 @@ export default function HoldingsTable({ holdings, quotes }: Props) {
                 <div className="grid grid-cols-3 gap-2">
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Avg Cost</span>
-                    <span className="font-mono text-site-text text-xs">{formatPence(h.avg_cost_pence)}</span>
+                    <span className="font-mono text-site-text text-xs">{formatAvgCost(h.avg_cost_pence)}</span>
                   </div>
                   <div>
                     <span className="block text-text-muted" style={{ fontSize: '0.6rem', letterSpacing: '0.1em', textTransform: 'uppercase' }}>P&L</span>
