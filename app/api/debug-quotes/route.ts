@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+export const runtime = 'edge'
+
 // Temporary debug route — no auth, remove after diagnosis
 export async function GET() {
   const ticker = 'TSLA'
