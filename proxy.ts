@@ -1,13 +1,16 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateSession } from '@/lib/supabase/middleware'
 
+const PROTECTED = ['/dashboard', '/manage', '/api/quotes']
+
 export async function proxy(request: NextRequest) {
   const { response, user } = await updateSession(request)
   const { pathname } = request.nextUrl
 
+  const isProtected = PROTECTED.some((p) => pathname.startsWith(p))
   const isLoginPage = pathname === '/login'
 
-  if (!user && !isLoginPage) {
+  if (!user && isProtected) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
@@ -15,7 +18,7 @@ export async function proxy(request: NextRequest) {
 
   if (user && isLoginPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 

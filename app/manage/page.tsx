@@ -110,7 +110,7 @@ export default function ManagePage() {
             <ul className="flex gap-6 list-none">
               <li>
                 <Link
-                  href="/"
+                  href="/dashboard"
                   className="text-text-muted hover:text-site-text transition-colors"
                   style={{ fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                 >
