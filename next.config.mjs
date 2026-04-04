@@ -1,5 +1,3 @@
-const nextConfig = {
-  serverExternalPackages: ['yahoo-finance2'],
-}
+const nextConfig = {}
 
 export default nextConfig
