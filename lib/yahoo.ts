@@ -1,4 +1,6 @@
-import yahooFinance from 'yahoo-finance2'
+import YahooFinance from 'yahoo-finance2'
+
+const yf = new YahooFinance()
 
 export interface QuoteData {
   ticker: string
@@ -41,20 +43,17 @@ export async function fetchQuotes(tickers: string[]): Promise<QuoteMap> {
   await Promise.allSettled(
     tickers.map(async (ticker) => {
       try {
-        const quote = await yahooFinance.quoteSummary(ticker, {
-          modules: ['price'],
-        })
-        const price = quote.price
+        const q = await yf.quote(ticker)
         result[ticker] = {
           ticker,
-          regularMarketPrice: price?.regularMarketPrice ?? null,
-          regularMarketChange: price?.regularMarketChange ?? null,
-          regularMarketChangePercent: price?.regularMarketChangePercent ?? null,
-          fiftyTwoWeekHigh: price?.fiftyTwoWeekHigh ?? null,
-          fiftyTwoWeekLow: price?.fiftyTwoWeekLow ?? null,
-          trailingPE: price?.trailingPE ?? null,
-          marketCap: price?.marketCap ?? null,
-          currency: price?.currency ?? null,
+          regularMarketPrice: q.regularMarketPrice ?? null,
+          regularMarketChange: q.regularMarketChange ?? null,
+          regularMarketChangePercent: q.regularMarketChangePercent ?? null,
+          fiftyTwoWeekHigh: q.fiftyTwoWeekHigh ?? null,
+          fiftyTwoWeekLow: q.fiftyTwoWeekLow ?? null,
+          trailingPE: q.trailingPE ?? null,
+          marketCap: q.marketCap ?? null,
+          currency: q.currency ?? null,
         }
       } catch {
         result[ticker] = {
