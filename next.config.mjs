@@ -1,7 +1,5 @@
-
-
 const nextConfig = {
-  // No special config needed for v1
+  serverExternalPackages: ['yahoo-finance2'],
 }
 
 export default nextConfig
