@@ -5,7 +5,9 @@ import { timeAgo } from '@/lib/utils'
 import SummaryBar from './SummaryBar'
 import HoldingsTable from './HoldingsTable'
 import WatchlistTable from './WatchlistTable'
+import PortfolioThesisPanel from './PortfolioThesisPanel'
 import type { QuoteMap } from '@/lib/yahoo'
+import type { ThesisAnalysis, PositionRecommendation } from './ThesisPanel'
 
 interface Holding {
   id: string
@@ -29,9 +31,18 @@ interface WatchlistItem {
 interface Props {
   holdings: Holding[]
   watchlistItems: WatchlistItem[]
+  portfolioThesis: string
+  analyses: ThesisAnalysis[]
+  recommendations: PositionRecommendation[]
 }
 
-export default function DashboardShell({ holdings, watchlistItems }: Props) {
+export default function DashboardShell({
+  holdings,
+  watchlistItems,
+  portfolioThesis,
+  analyses,
+  recommendations,
+}: Props) {
   const [quotes, setQuotes] = useState<QuoteMap>({})
   const [gbpusdRate, setGbpusdRate] = useState<number | null>(null)
   const [fetchTime, setFetchTime] = useState<Date | null>(null)
@@ -62,6 +73,16 @@ export default function DashboardShell({ holdings, watchlistItems }: Props) {
   useEffect(() => {
     loadQuotes()
   }, [loadQuotes])
+
+  // Derive last analysed timestamp from most recent analysis row
+  const lastAnalysedAt = analyses.length > 0
+    ? analyses.reduce((latest, a) =>
+        a.analyzed_at > latest ? a.analyzed_at : latest,
+        analyses[0].analyzed_at
+      )
+    : null
+
+  const hasHoldingsWithThesis = holdings.some((h) => h.thesis?.trim())
 
   return (
     <>
@@ -105,6 +126,13 @@ export default function DashboardShell({ holdings, watchlistItems }: Props) {
       {/* Summary bar */}
       <SummaryBar holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
 
+      {/* Portfolio thesis + analyse button */}
+      <PortfolioThesisPanel
+        initialThesis={portfolioThesis}
+        lastAnalysedAt={lastAnalysedAt}
+        hasHoldingsWithThesis={hasHoldingsWithThesis}
+      />
+
       {/* Holdings section */}
       <section className="mb-12">
         <div className="flex items-baseline gap-3 mb-6">
@@ -119,7 +147,13 @@ export default function DashboardShell({ holdings, watchlistItems }: Props) {
             {holdings.length} {holdings.length === 1 ? 'position' : 'positions'}
           </span>
         </div>
-        <HoldingsTable holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
+        <HoldingsTable
+          holdings={holdings}
+          quotes={quotes}
+          gbpusdRate={gbpusdRate}
+          analyses={analyses}
+          recommendations={recommendations}
+        />
       </section>
 
       {/* Watchlist section */}

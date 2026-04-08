@@ -11,7 +11,9 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const [holdingsResult, watchlistResult] = await Promise.all([
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+  const [holdingsResult, watchlistResult, settingsResult, analysesResult, recommendationsResult] = await Promise.all([
     supabase
       .from('holdings')
       .select('*')
@@ -22,10 +24,28 @@ export default async function DashboardPage() {
       .select('*')
       .eq('user_id', user.id)
       .order('added_at', { ascending: true }),
+    supabase
+      .from('portfolio_settings')
+      .select('portfolio_thesis, updated_at')
+      .eq('user_id', user.id)
+      .maybeSingle(),
+    supabase
+      .from('thesis_analyses')
+      .select('*')
+      .eq('user_id', user.id)
+      .gte('analyzed_at', sevenDaysAgo)
+      .order('analyzed_at', { ascending: false }),
+    supabase
+      .from('position_recommendations')
+      .select('*')
+      .eq('user_id', user.id),
   ])
 
   const holdings = holdingsResult.data ?? []
   const watchlistItems = watchlistResult.data ?? []
+  const portfolioThesis = settingsResult.data?.portfolio_thesis ?? ''
+  const analyses = analysesResult.data ?? []
+  const recommendations = recommendationsResult.data ?? []
 
   async function handleSignOut() {
     'use server'
@@ -114,7 +134,13 @@ export default async function DashboardPage() {
 
         {/* Data sections — fetched client-side via edge API */}
         <div className="animate-fade-up" style={{ animationDelay: '0.4s' }}>
-          <DashboardShell holdings={holdings} watchlistItems={watchlistItems} />
+          <DashboardShell
+            holdings={holdings}
+            watchlistItems={watchlistItems}
+            portfolioThesis={portfolioThesis}
+            analyses={analyses}
+            recommendations={recommendations}
+          />
         </div>
 
         {/* Footer */}

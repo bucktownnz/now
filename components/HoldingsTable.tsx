@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import ThesisPanel from './ThesisPanel'
 import FiftyTwoWeekBar from './FiftyTwoWeekBar'
+import type { ThesisAnalysis, PositionRecommendation } from './ThesisPanel'
 import {
   formatNativePrice,
   formatPercent,
@@ -29,6 +30,8 @@ interface Props {
   holdings: Holding[]
   quotes: QuoteMap
   gbpusdRate: number | null
+  analyses: ThesisAnalysis[]
+  recommendations: PositionRecommendation[]
 }
 
 function calcPnL(
@@ -58,7 +61,7 @@ function formatCostWithCurrency(cost: number, currency: string | null, ticker: s
   return `${symbol}${cost.toFixed(2)}`
 }
 
-export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
+export default function HoldingsTable({ holdings, quotes, gbpusdRate, analyses, recommendations }: Props) {
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   function toggle(id: string) {
@@ -115,6 +118,9 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
                 if (v == null) return null
                 return q?.currency === 'GBp' ? v / 100 : v
               }
+
+              const holdingAnalyses = analyses.filter((a) => a.ticker === h.ticker)
+              const holdingRec = recommendations.find((r) => r.ticker === h.ticker) ?? null
 
               return (
                 <>
@@ -186,6 +192,8 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
                           sector={h.sector}
                           addedAt={h.added_at}
                           ticker={h.ticker}
+                          analyses={holdingAnalyses}
+                          recommendation={holdingRec}
                         />
                       </td>
                     </tr>
@@ -211,6 +219,8 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
             gbpusdRate
           )
           const isExpanded = expandedId === h.id
+          const holdingAnalyses = analyses.filter((a) => a.ticker === h.ticker)
+          const holdingRec = recommendations.find((r) => r.ticker === h.ticker) ?? null
 
           return (
             <div
@@ -269,6 +279,8 @@ export default function HoldingsTable({ holdings, quotes, gbpusdRate }: Props) {
                   sector={h.sector}
                   addedAt={h.added_at}
                   ticker={h.ticker}
+                  analyses={holdingAnalyses}
+                  recommendation={holdingRec}
                 />
               )}
             </div>

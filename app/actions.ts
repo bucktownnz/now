@@ -61,6 +61,34 @@ export async function deleteHolding(id: string) {
   revalidatePath('/manage')
 }
 
+// ─── Portfolio Settings ───────────────────────────────────────────────────────
+
+export async function getPortfolioThesis(): Promise<string> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return ''
+
+  const { data } = await supabase
+    .from('portfolio_settings')
+    .select('portfolio_thesis')
+    .eq('user_id', user.id)
+    .single()
+
+  return data?.portfolio_thesis ?? ''
+}
+
+export async function updatePortfolioThesis(thesis: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Unauthorized')
+
+  await supabase
+    .from('portfolio_settings')
+    .upsert({ user_id: user.id, portfolio_thesis: thesis, updated_at: new Date().toISOString() })
+
+  revalidatePath('/dashboard')
+}
+
 // ─── Watchlist ────────────────────────────────────────────────────────────────
 
 export async function addWatchlistItem(formData: FormData) {
