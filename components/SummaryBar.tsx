@@ -1,5 +1,6 @@
 import { formatPounds, formatPercent, gainColour } from '@/lib/utils'
 import type { QuoteMap } from '@/lib/yahoo'
+import type { SwingTrade } from './SwingTradesTable'
 
 interface Holding {
   id: string
@@ -12,9 +13,11 @@ interface Props {
   holdings: Holding[]
   quotes: QuoteMap
   gbpusdRate: number | null
+  swingTrades?: SwingTrade[]
+  swingBudget?: number
 }
 
-export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
+export default function SummaryBar({ holdings, quotes, gbpusdRate, swingTrades = [], swingBudget = 1000 }: Props) {
   let totalValue = 0
   let totalCost = 0
   let totalDayChange = 0
@@ -61,6 +64,24 @@ export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
     ? (totalDayChange / (totalValue - totalDayChange)) * 100
     : null
 
+  // ── Swing trade stats ────────────────────────────────────────────────────────
+  let swingDeployed = 0
+  let swingUnrealisedPnL = 0
+  let swingHasPrices = false
+
+  for (const s of swingTrades) {
+    const currency = s.ticker.endsWith('.L') ? 'GBP' : 'USD'
+    swingDeployed += toGBP(s.entry_price_pence * s.shares, currency)
+    const q = quotes[s.ticker]
+    if (q?.nativePrice != null) {
+      swingHasPrices = true
+      const pnlNative = (q.nativePrice - s.entry_price_pence) * s.shares
+      swingUnrealisedPnL += toGBP(pnlNative, currency)
+    }
+  }
+
+  const swingAvailable = Math.max(0, swingBudget - swingDeployed)
+
   const stats = [
     {
       label: 'Total Value',
@@ -88,26 +109,78 @@ export default function SummaryBar({ holdings, quotes, gbpusdRate }: Props) {
     },
   ]
 
+  const swingStats = [
+    {
+      label: 'Swing Deployed',
+      value: formatPounds(swingDeployed),
+      sub: `of ${formatPounds(swingBudget)}`,
+      colourClass: 'text-site-text',
+    },
+    {
+      label: 'Available',
+      value: formatPounds(swingAvailable),
+      sub: null,
+      colourClass: 'text-site-text',
+    },
+    {
+      label: 'Swing P&L',
+      value: swingHasPrices ? formatPounds(swingUnrealisedPnL) : '—',
+      sub: null,
+      colourClass: gainColour(swingHasPrices ? swingUnrealisedPnL : null),
+    },
+    {
+      label: 'Open Trades',
+      value: String(swingTrades.length),
+      sub: null,
+      colourClass: 'text-site-text',
+    },
+  ]
+
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border rounded-[3px] overflow-hidden mb-8">
-      {stats.map((stat) => (
-        <div key={stat.label} className="bg-bg-2 px-4 py-4">
-          <p
-            className="text-text-muted mb-1"
-            style={{ fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}
-          >
-            {stat.label}
-          </p>
-          <p className={`font-mono text-sm font-normal ${stat.colourClass}`}>
-            {stat.value}
-            {stat.sub && (
-              <span className="text-text-muted ml-1.5" style={{ fontSize: '0.75rem' }}>
-                {stat.sub}
-              </span>
-            )}
-          </p>
-        </div>
-      ))}
+    <div className="flex flex-col gap-2 mb-8">
+      {/* Long-term portfolio */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border rounded-[3px] overflow-hidden">
+        {stats.map((stat) => (
+          <div key={stat.label} className="bg-bg-2 px-4 py-4">
+            <p
+              className="text-text-muted mb-1"
+              style={{ fontSize: '0.65rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}
+            >
+              {stat.label}
+            </p>
+            <p className={`font-mono text-sm font-normal ${stat.colourClass}`}>
+              {stat.value}
+              {stat.sub && (
+                <span className="text-text-muted ml-1.5" style={{ fontSize: '0.75rem' }}>
+                  {stat.sub}
+                </span>
+              )}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      {/* Swing trades summary */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border border border-border rounded-[3px] overflow-hidden">
+        {swingStats.map((stat) => (
+          <div key={stat.label} className="bg-bg-2/60 px-4 py-3">
+            <p
+              className="text-text-muted mb-1"
+              style={{ fontSize: '0.6rem', letterSpacing: '0.12em', textTransform: 'uppercase' }}
+            >
+              {stat.label}
+            </p>
+            <p className={`font-mono text-sm font-normal ${stat.colourClass}`}>
+              {stat.value}
+              {stat.sub && (
+                <span className="text-text-muted ml-1.5" style={{ fontSize: '0.7rem' }}>
+                  {stat.sub}
+                </span>
+              )}
+            </p>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

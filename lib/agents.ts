@@ -3,6 +3,129 @@ import type { NewsItem } from './news'
 
 const MODEL = 'claude-sonnet-4-6'
 
+// ─── Agent 3: Swing Setup Analyser ───────────────────────────────────────────
+
+export interface SwingAnalysis {
+  setup_quality: 'good' | 'fair' | 'poor'
+  catalyst: string
+  entry_rationale: string
+  target_rationale: string
+  invalidation: string
+  conviction: 'high' | 'medium' | 'low'
+  horizon: string
+}
+
+const SWING_SYSTEM = `You are an expert short-term trader focused on identifying swing trade setups with a 1–4 week holding horizon.
+
+A good swing trade has: a clear catalyst (news, earnings, sector rotation, technical breakout), a defined entry zone, a logical exit target, and a specific invalidation condition.
+
+Assess the recent news and watchlist notes to determine the quality of the current setup. Be honest — "poor" is the right answer when there is no clear near-term catalyst. Do not manufacture conviction.
+
+Respond only via the provided tool.`
+
+export async function analyzeSwingSetup(params: {
+  ticker: string
+  companyName: string
+  news: NewsItem[]
+  watchlistNotes: string
+  currentPrice: number | null
+}): Promise<SwingAnalysis> {
+  const client = getClient()
+  const { ticker, companyName, news, watchlistNotes, currentPrice } = params
+
+  const newsSummary = news.length > 0
+    ? news
+        .slice(0, 8)
+        .map((n, i) => {
+          const date = n.publishedAt
+            ? n.publishedAt.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+            : 'Unknown'
+          return `${i + 1}. [${date}] "${n.title}" — ${n.publisher}`
+        })
+        .join('\n')
+    : 'No recent news found.'
+
+  const priceContext = currentPrice != null ? `Current price: ${currentPrice.toFixed(2)}` : 'Current price: unavailable'
+
+  const userMessage = `Assess the swing trade setup for ${ticker} (${companyName}).
+
+${priceContext}
+
+Watchlist notes:
+${watchlistNotes || 'No notes.'}
+
+Recent news (last 10 items):
+${newsSummary}
+
+Is there a compelling swing trade setup here right now? What is the catalyst, entry rationale, realistic target, and what would invalidate the trade?`
+
+  const response = await client.messages.create({
+    model: MODEL,
+    max_tokens: 600,
+    system: SWING_SYSTEM,
+    tools: [
+      {
+        name: 'record_swing_analysis',
+        description: 'Record the swing trade setup analysis',
+        input_schema: {
+          type: 'object' as const,
+          properties: {
+            setup_quality: {
+              type: 'string',
+              enum: ['good', 'fair', 'poor'],
+              description: 'Overall quality of the current swing trade setup',
+            },
+            catalyst: {
+              type: 'string',
+              description: 'The specific near-term catalyst or trigger for this trade (1–2 sentences)',
+            },
+            entry_rationale: {
+              type: 'string',
+              description: 'Why and where to enter — context for timing the entry (1–2 sentences)',
+            },
+            target_rationale: {
+              type: 'string',
+              description: 'What would constitute a successful exit and rough upside potential (1–2 sentences)',
+            },
+            invalidation: {
+              type: 'string',
+              description: 'Specific condition that would prove the trade thesis wrong and trigger an exit (1 sentence)',
+            },
+            conviction: {
+              type: 'string',
+              enum: ['high', 'medium', 'low'],
+              description: 'Conviction level in this setup',
+            },
+            horizon: {
+              type: 'string',
+              description: 'Expected holding duration e.g. "3–5 days", "1–2 weeks", "2–4 weeks"',
+            },
+          },
+          required: ['setup_quality', 'catalyst', 'entry_rationale', 'target_rationale', 'invalidation', 'conviction', 'horizon'],
+        },
+      },
+    ],
+    tool_choice: { type: 'tool', name: 'record_swing_analysis' },
+    messages: [{ role: 'user', content: userMessage }],
+  })
+
+  const toolUse = response.content.find((b) => b.type === 'tool_use')
+  if (!toolUse || toolUse.type !== 'tool_use') {
+    throw new Error(`[agents] analyzeSwingSetup: no tool_use block returned for ${ticker}`)
+  }
+
+  const input = toolUse.input as SwingAnalysis
+  return {
+    setup_quality: input.setup_quality,
+    catalyst: input.catalyst,
+    entry_rationale: input.entry_rationale,
+    target_rationale: input.target_rationale,
+    invalidation: input.invalidation,
+    conviction: input.conviction,
+    horizon: input.horizon,
+  }
+}
+
 function getClient(): Anthropic {
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY is not set')

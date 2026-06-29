@@ -5,9 +5,14 @@ import { timeAgo } from '@/lib/utils'
 import SummaryBar from './SummaryBar'
 import HoldingsTable from './HoldingsTable'
 import WatchlistTable from './WatchlistTable'
+import SwingTradesTable from './SwingTradesTable'
+import SwingScoutPanel from './SwingScoutPanel'
 import PortfolioThesisPanel from './PortfolioThesisPanel'
+import AddSwingTradeForm from './AddSwingTradeForm'
 import type { QuoteMap } from '@/lib/yahoo'
 import type { ThesisAnalysis, PositionRecommendation } from './ThesisPanel'
+import type { SwingTrade } from './SwingTradesTable'
+import type { ScoutResult } from './SwingScoutPanel'
 
 interface Holding {
   id: string
@@ -28,12 +33,16 @@ interface WatchlistItem {
   added_at: string
 }
 
+const SWING_BUDGET = 1000
+
 interface Props {
   holdings: Holding[]
   watchlistItems: WatchlistItem[]
   portfolioThesis: string
   analyses: ThesisAnalysis[]
   recommendations: PositionRecommendation[]
+  swingTrades: SwingTrade[]
+  scoutResults: ScoutResult[]
 }
 
 export default function DashboardShell({
@@ -42,22 +51,27 @@ export default function DashboardShell({
   portfolioThesis,
   analyses,
   recommendations,
+  swingTrades,
+  scoutResults,
 }: Props) {
   const [quotes, setQuotes] = useState<QuoteMap>({})
   const [gbpusdRate, setGbpusdRate] = useState<number | null>(null)
   const [fetchTime, setFetchTime] = useState<Date | null>(null)
   const [loading, setLoading] = useState(false)
+  const [showAddSwing, setShowAddSwing] = useState(false)
 
   const loadQuotes = useCallback(async () => {
     const allTickers = [
       ...holdings.map((h) => h.ticker),
       ...watchlistItems.map((w) => w.ticker),
+      ...swingTrades.map((s) => s.ticker),
     ]
-    if (allTickers.length === 0) return
+    const uniqueTickers = Array.from(new Set(allTickers))
+    if (uniqueTickers.length === 0) return
 
     setLoading(true)
     try {
-      const res = await fetch(`/api/quotes?t=${allTickers.join(',')}`)
+      const res = await fetch(`/api/quotes?t=${uniqueTickers.join(',')}`)
       if (!res.ok) throw new Error(`HTTP ${res.status}`)
       const data = await res.json()
       setQuotes(data.quotes ?? {})
@@ -124,7 +138,7 @@ export default function DashboardShell({
       </div>
 
       {/* Summary bar */}
-      <SummaryBar holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} />
+      <SummaryBar holdings={holdings} quotes={quotes} gbpusdRate={gbpusdRate} swingTrades={swingTrades} swingBudget={SWING_BUDGET} />
 
       {/* Portfolio thesis + analyse button */}
       <PortfolioThesisPanel
@@ -132,6 +146,37 @@ export default function DashboardShell({
         lastAnalysedAt={lastAnalysedAt}
         hasHoldingsWithThesis={hasHoldingsWithThesis}
       />
+
+      {/* Swing Trades section */}
+      <section className="mb-12">
+        <div className="flex items-baseline gap-3 mb-6">
+          <span
+            className="text-accent shrink-0"
+            style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
+          >
+            Swing Trades
+          </span>
+          <div className="flex-1 h-px bg-border" />
+          <button
+            onClick={() => setShowAddSwing((v) => !v)}
+            className="text-text-muted hover:text-accent transition-colors shrink-0"
+            style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
+          >
+            {showAddSwing ? 'Cancel' : '+ Add'}
+          </button>
+          <span className="text-text-muted shrink-0" style={{ fontSize: '0.65rem' }}>
+            {swingTrades.length} open
+          </span>
+        </div>
+
+        {showAddSwing && (
+          <div className="bg-bg-2 border border-border rounded-[3px] p-5 mb-6">
+            <AddSwingTradeForm onDone={() => setShowAddSwing(false)} />
+          </div>
+        )}
+
+        <SwingTradesTable trades={swingTrades} quotes={quotes} gbpusdRate={gbpusdRate} />
+      </section>
 
       {/* Holdings section */}
       <section className="mb-12">
@@ -157,7 +202,7 @@ export default function DashboardShell({
       </section>
 
       {/* Watchlist section */}
-      <section className="mb-16">
+      <section className="mb-8">
         <div className="flex items-baseline gap-3 mb-6">
           <span
             className="text-accent shrink-0"
@@ -172,6 +217,25 @@ export default function DashboardShell({
         </div>
         <WatchlistTable watchlist={watchlistItems} quotes={quotes} />
       </section>
+
+      {/* Swing Scout — analyse watchlist items for setups */}
+      {watchlistItems.length > 0 && (
+        <section className="mb-16">
+          <div className="flex items-baseline gap-3 mb-6">
+            <span
+              className="text-accent shrink-0"
+              style={{ fontSize: '0.65rem', letterSpacing: '0.15em', textTransform: 'uppercase' }}
+            >
+              Scout
+            </span>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-text-muted shrink-0" style={{ fontSize: '0.65rem' }}>
+              AI swing setup analysis
+            </span>
+          </div>
+          <SwingScoutPanel watchlistItems={watchlistItems} scoutResults={scoutResults} />
+        </section>
+      )}
     </>
   )
 }

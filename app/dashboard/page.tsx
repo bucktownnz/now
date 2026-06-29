@@ -13,7 +13,7 @@ export default async function DashboardPage() {
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
-  const [holdingsResult, watchlistResult, settingsResult, analysesResult, recommendationsResult] = await Promise.all([
+  const [holdingsResult, watchlistResult, settingsResult, analysesResult, recommendationsResult, swingTradesResult, scoutResultsResult] = await Promise.all([
     supabase
       .from('holdings')
       .select('*')
@@ -39,6 +39,17 @@ export default async function DashboardPage() {
       .from('position_recommendations')
       .select('*')
       .eq('user_id', user.id),
+    supabase
+      .from('swing_trades')
+      .select('*')
+      .eq('user_id', user.id)
+      .eq('status', 'open')
+      .order('opened_at', { ascending: false }),
+    supabase
+      .from('scout_results')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('scouted_at', { ascending: false }),
   ])
 
   const holdings = holdingsResult.data ?? []
@@ -46,6 +57,8 @@ export default async function DashboardPage() {
   const portfolioThesis = settingsResult.data?.portfolio_thesis ?? ''
   const analyses = analysesResult.data ?? []
   const recommendations = recommendationsResult.data ?? []
+  const swingTrades = swingTradesResult.data ?? []
+  const scoutResults = scoutResultsResult.data ?? []
 
   async function handleSignOut() {
     'use server'
@@ -96,6 +109,15 @@ export default async function DashboardPage() {
                   Manage
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/move"
+                  className="text-text-muted hover:text-site-text transition-colors"
+                  style={{ fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                >
+                  Move
+                </Link>
+              </li>
             </ul>
             <form action={handleSignOut}>
               <button
@@ -140,6 +162,8 @@ export default async function DashboardPage() {
             portfolioThesis={portfolioThesis}
             analyses={analyses}
             recommendations={recommendations}
+            swingTrades={swingTrades}
+            scoutResults={scoutResults}
           />
         </div>
 

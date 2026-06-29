@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
-import { deleteHolding, deleteWatchlistItem } from '@/app/actions'
+import { deleteHolding, deleteWatchlistItem, deleteSwingTrade } from '@/app/actions'
 import AddHoldingForm from '@/components/AddHoldingForm'
 import AddWatchlistForm from '@/components/AddWatchlistForm'
+import ClosedTradesTable from '@/components/ClosedTradesTable'
 import { formatPence, formatDate } from '@/lib/utils'
+import type { SwingTrade } from '@/components/SwingTradesTable'
 
 interface Holding {
   id: string
@@ -38,6 +40,7 @@ export default function ManagePage() {
   const router = useRouter()
   const [holdings, setHoldings] = useState<Holding[]>([])
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([])
+  const [closedTrades, setClosedTrades] = useState<SwingTrade[]>([])
   const [loading, setLoading] = useState(true)
   const [editingHolding, setEditingHolding] = useState<Holding | null>(null)
   const [editingWatchlist, setEditingWatchlist] = useState<WatchlistItem | null>(null)
@@ -56,13 +59,15 @@ export default function ManagePage() {
       return
     }
 
-    const [h, w] = await Promise.all([
+    const [h, w, st] = await Promise.all([
       supabase.from('holdings').select('*').eq('user_id', user.id).order('added_at'),
       supabase.from('watchlist').select('*').eq('user_id', user.id).order('added_at'),
+      supabase.from('swing_trades').select('*').eq('user_id', user.id).neq('status', 'open').order('closed_at', { ascending: false }),
     ])
 
     setHoldings(h.data ?? [])
     setWatchlist(w.data ?? [])
+    setClosedTrades((st.data ?? []) as SwingTrade[])
     setLoading(false)
   }
 
@@ -124,6 +129,15 @@ export default function ManagePage() {
                   style={{ fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}
                 >
                   Manage
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/move"
+                  className="text-text-muted hover:text-site-text transition-colors"
+                  style={{ fontSize: '0.75rem', letterSpacing: '0.08em', textTransform: 'uppercase' }}
+                >
+                  Move
                 </Link>
               </li>
             </ul>
@@ -319,8 +333,20 @@ export default function ManagePage() {
           )}
         </section>
 
+        {/* ── Swing Trade History section ── */}
+        <section className="mb-16 animate-fade-up" style={{ animationDelay: '0.7s' }}>
+          <div className="flex items-baseline gap-3 mb-6">
+            <span className="text-accent shrink-0" style={sectionLabelStyle}>Swing Trades — History</span>
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-text-muted shrink-0" style={sectionLabelStyle}>
+              {closedTrades.length} closed
+            </span>
+          </div>
+          <ClosedTradesTable trades={closedTrades} />
+        </section>
+
         {/* Footer */}
-        <footer className="border-t border-border pt-6 pb-10 flex items-center justify-between animate-fade-up" style={{ animationDelay: '0.7s' }}>
+        <footer className="border-t border-border pt-6 pb-10 flex items-center justify-between animate-fade-up" style={{ animationDelay: '0.85s' }}>
           <span className="text-text-muted" style={{ fontSize: '0.75rem' }}>
             watchlist.sambuxton.dev
           </span>
