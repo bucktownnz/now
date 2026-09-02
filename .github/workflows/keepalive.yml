@@ -1,0 +1,20 @@
+name: keepalive
+
+# Second, independent leg of the keep-alive. The Vercel cron in vercel.json is
+# the primary; this one runs on GitHub's schedule so a Vercel-side failure
+# (a broken cron, a bad deploy) can't pause the database on its own.
+#
+# Caveat: GitHub disables scheduled workflows after 60 days of repo inactivity.
+# That's a far longer leash than Supabase's 7 days, but not infinite.
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping keep-alive endpoint
+        run: curl -fsS --retry 3 --retry-delay 30 -m 30 https://sambuxton.dev/api/cron/keepalive
